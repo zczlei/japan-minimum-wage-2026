@@ -1,0 +1,78 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/<あなたのID>/japan-minimum-wage-2026/blob/main/schema.json",
+  "title": "Japan regional minimum wage, Reiwa 8 (2026)",
+  "description": "47都道府県の地域別最低賃金（令和8年度＝2026年度確定額・令和7年度額・適用開始日）",
+  "type": "object",
+  "required": ["dataset", "fiscalYear", "year", "unit", "updatedAt", "prefectures"],
+  "additionalProperties": false,
+  "properties": {
+    "dataset": { "type": "string", "const": "japan-regional-minimum-wage" },
+    "fiscalYear": { "type": "string", "pattern": "^R[0-9]+$", "description": "和暦年度。R8 = 令和8年度" },
+    "year": { "type": "integer", "description": "西暦年度（2026）" },
+    "unit": { "type": "string", "const": "JPY/hour", "description": "すべて時間額（円）" },
+    "updatedAt": { "type": "string", "format": "date", "description": "このファイルを作った／更新した日" },
+    "sources": {
+      "type": "object",
+      "required": ["nationalList"],
+      "additionalProperties": false,
+      "properties": {
+        "nationalList": { "type": "string", "format": "uri", "description": "都道府県労働局の公示をまとめた公式ページ" },
+        "datasetPage": { "type": "string", "format": "uri", "description": "このデータを一般向けに可視化したページ（任意）" }
+      }
+    },
+    "summary": {
+      "type": "object",
+      "required": ["nationalWeightedAverage", "highest", "lowest", "spread", "appliedCount", "notYetEffectiveCount"],
+      "additionalProperties": false,
+      "properties": {
+        "nationalWeightedAverage": { "type": "integer", "minimum": 0 },
+        "nationalWeightedAveragePrevious": { "type": "integer", "minimum": 0 },
+        "highest": { "$ref": "#/$defs/extreme" },
+        "lowest": { "$ref": "#/$defs/extreme" },
+        "spread": { "type": "integer", "minimum": 0, "description": "最高と最低の差（円）" },
+        "appliedCount": { "type": "integer", "minimum": 0, "maximum": 47, "description": "updatedAt 時点で発効済みの県数" },
+        "notYetEffectiveCount": { "type": "integer", "minimum": 0, "maximum": 47 }
+      }
+    },
+    "note": { "type": "string", "description": "利用上の注意（公式の代替ではない 等）" },
+    "prefectures": {
+      "type": "array",
+      "minItems": 47,
+      "maxItems": 47,
+      "items": { "$ref": "#/$defs/prefecture" }
+    }
+  },
+  "$defs": {
+    "extreme": {
+      "type": "object",
+      "required": ["prefecture", "slug", "amount"],
+      "additionalProperties": false,
+      "properties": {
+        "prefecture": { "type": "string" },
+        "slug": { "type": "string", "pattern": "^[a-z]+$" },
+        "amount": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "prefecture": {
+      "type": "object",
+      "required": ["code", "name", "slug", "region", "amountR8", "amountR7", "diff", "effectiveDate", "dateTentative", "applied"],
+      "additionalProperties": false,
+      "properties": {
+        "code": { "type": "string", "pattern": "^(0[1-9]|[1-3][0-9]|4[0-7])$", "description": "JIS X 0401" },
+        "name": { "type": "string", "minLength": 2 },
+        "slug": { "type": "string", "pattern": "^[a-z]+$" },
+        "region": {
+          "type": "string",
+          "enum": ["hokkaido-tohoku", "kanto", "chubu", "kinki", "chugoku", "shikoku", "kyushu-okinawa"]
+        },
+        "amountR8": { "type": "integer", "minimum": 1000, "maximum": 1400, "description": "令和8年度（2026年度）地域別最低賃金（円/時）" },
+        "amountR7": { "type": "integer", "minimum": 900, "maximum": 1300, "description": "令和7年度（2025年度）の額（円/時）" },
+        "diff": { "type": "integer", "description": "amountR8 - amountR7" },
+        "effectiveDate": { "type": "string", "format": "date", "description": "新額の適用開始日" },
+        "dateTentative": { "type": "boolean", "description": "true = 発効日が公示上まだ予定" },
+        "applied": { "type": "boolean", "description": "true = updatedAt 時点で発効済み" }
+      }
+    }
+  }
+}
