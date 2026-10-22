@@ -1,0 +1,218 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>地域別最低賃金 2026（令和8年度）判定｜47都道府県データ付き</title>
+<meta name="description" content="47都道府県の地域別最低賃金（令和8年度＝2026年度）の確定額と発効日に、あなたの時給・月給が達しているかその場で判定します。JSONデータも公開。">
+<style>
+  body{font-family:system-ui,-apple-system,"Hiragino Kaku Gothic ProN","Noto Sans JP",sans-serif;
+       max-width:760px;margin:0 auto;padding:20px;color:#1b1b1b;line-height:1.75}
+  h1{font-size:1.45rem;line-height:1.35;margin:.2em 0}
+  h2{font-size:1.15rem;margin:1.8em 0 .5em}
+  .card{border:1px solid #ddd;border-radius:10px;padding:16px;background:#fafafa}
+  label{display:block;font-size:.9rem;font-weight:600;margin:.8em 0 .25em}
+  select,input,button{font-size:1rem;padding:9px;border:1px solid #bbb;border-radius:6px;width:100%;box-sizing:border-box}
+  button{margin-top:14px;background:#0b6bcb;color:#fff;border:0;font-weight:700;cursor:pointer}
+  .row{display:flex;gap:12px;flex-wrap:wrap}
+  .row>div{flex:1 1 180px}
+  #result{display:none;margin-top:14px;padding:12px;border-radius:8px;font-size:1.02rem}
+  .ok{background:#e6f7e8;color:#145c21}
+  .ng{background:#fdecec;color:#8b1a1a}
+  .wait{background:#fff4e0;color:#7a4b00}
+  .muted{color:#666;font-size:.85rem}
+  table{width:100%;border-collapse:collapse;font-size:.87rem;margin-top:8px}
+  th,td{border-bottom:1px solid #eee;padding:7px 6px;text-align:left}
+  th{background:#f3f3f3}
+  td.num{text-align:right;font-variant-numeric:tabular-nums}
+</style>
+</head>
+<body>
+
+<h1>地域別最低賃金 2026（令和8年度）判定</h1>
+<p>47都道府県の地域別最低賃金（令和8年度＝2026年度・確定額）に、あなたの時給または月給が達しているかをその場で調べます。金額はこのリポジトリの <code>data/r8-2026.json</code> から読み込んでいます。</p>
+
+<div class="card">
+  <div class="row">
+    <div>
+      <label for="pref">都道府県</label>
+      <select id="pref"><option value="">読み込み中…</option></select>
+    </div>
+    <div>
+      <label for="mode">調べ方</label>
+      <select id="mode">
+        <option value="hour">時給で判定</option>
+        <option value="month">月給で判定</option>
+      </select>
+    </div>
+  </div>
+
+  <label for="amount" id="lblAmount">あなたの時給（円）</label>
+  <input id="amount" type="number" min="0" step="1" inputmode="numeric" placeholder="例：1090">
+
+  <div id="hoursBox" style="display:none">
+    <label for="hours">1か月の所定労働時間（時間）</label>
+    <input id="hours" type="number" min="1" step="0.5" inputmode="decimal" placeholder="例：160">
+  </div>
+
+  <button id="btn" type="button">判定する</button>
+  <div id="result" role="status"></div>
+  <p class="muted" id="err"></p>
+</div>
+
+<h2>47都道府県の一覧（令和8年度・地域別最低賃金）</h2>
+<p class="muted" id="state">読み込み中…</p>
+<table>
+  <thead>
+    <tr><th>都道府県</th><th>令和8年度</th><th>令和7年度</th><th>差</th><th>発効日</th><th>状態</th></tr>
+  </thead>
+  <tbody id="tbody"></tbody>
+</table>
+<p class="muted">「未適用」は、その県の新額の発効日がまだ来ていないという意味です（2026-10-22 時点で判定）。未適用の県では、発効日前までは前年度額（令和7年度）が適用されています。</p>
+
+<h2>データ</h2>
+<p>このページの元データは <code>data/r8-2026.json</code>（47都道府県・確定額・引上げ額・発効日・発効日の確定状態）です。フィールド定義は <code>schema.json</code> にあります。自由に使い込んでください。</p>
+
+<footer>
+  <h2>注意と出典</h2>
+  <p class="muted">
+    地域別最低賃金は各都道府県労働局の公示によって決まり、公示から適用までに時間がかかります。金額・発効日は必ず労働局の公示でご確認ください。特定（産業別）最低賃金は本データに含まれていません。
+  </p>
+  <p class="muted">このデータを作成／更新した日：2026-10-22</p>
+</footer>
+
+<script>
+var DATA = null;
+
+function num(n) { return Number(n).toLocaleString('ja-JP'); }
+
+function fail(msg) {
+  document.getElementById('err').textContent = msg;
+}
+
+function load() {
+  if (location.protocol === 'file:') {
+    fail('index.html をダブルクリックで開くと、ブラウザの制限で data/r8-2026.json を読めません。'
+       + 'GitHub Pages にデプロイしたURLか、ローカルサーバー（npx serve など）から開いてください。');
+    return;
+  }
+  fetch('./data/r8-2026.json')
+    .then(function (r) {
+      if (!r.ok) { throw new Error('HTTP ' + r.status); }
+      return r.json();
+    })
+    .then(function (d) { DATA = d; fill(); })
+    .catch(function (e) { fail('データの読み込みに失敗しました：' + e.message); });
+}
+
+function fill() {
+  var sel = document.getElementById('pref');
+  sel.innerHTML = '';
+  DATA.prefectures.forEach(function (p, i) {
+    var o = document.createElement('option');
+    o.value = i;
+    o.textContent = p.name + '（' + num(p.amountR8) + '円）';
+    sel.appendChild(o);
+  });
+
+  var tb = document.getElementById('tbody');
+  tb.innerHTML = '';
+  DATA.prefectures.forEach(function (p) {
+    var tr = document.createElement('tr');
+    tr.innerHTML = '<td>' + p.name + '</td>'
+      + '<td class="num">' + num(p.amountR8) + '</td>'
+      + '<td class="num">' + num(p.amountR7) + '</td>'
+      + '<td class="num">+' + p.diff + '</td>'
+      + '<td>' + p.effectiveDate + (p.dateTentative ? '（予定）' : '') + '</td>'
+      + '<td>' + (p.applied ? '適用' : '未適用') + '</td>';
+    tb.appendChild(tr);
+  });
+
+  var s = DATA.summary;
+  document.getElementById('state').textContent =
+    '全国加重平均 ' + num(s.nationalWeightedAverage) + ' 円（令和7年度 '
+    + num(s.nationalWeightedAveragePrevious) + ' 円）／最高 '
+    + s.highest.prefecture + ' ' + num(s.highest.amount) + ' 円／最低 '
+    + s.lowest.prefecture + ' ' + num(s.lowest.amount) + ' 円（差 ' + s.spread + ' 円）／適用済み '
+    + s.appliedCount + ' 県・未適用 ' + s.notYetEffectiveCount + ' 県';
+}
+
+function judge() {
+  if (!DATA) { fail('データが読み込めていないため判定できません。'); return; }
+
+  var box = document.getElementById('result');
+  var err = document.getElementById('err');
+  err.textContent = '';
+  box.style.display = 'none';
+
+  var p = DATA.prefectures[document.getElementById('pref').value];
+  if (!p) { return; }
+
+  var mode = document.getElementById('mode').value;
+  var amount = parseFloat(document.getElementById('amount').value);
+  var hourly = amount;
+  var hours = 0;
+
+  if (mode === 'month') {
+    hours = parseFloat(document.getElementById('hours').value);
+    if (!amount || amount <= 0 || !hours || hours <= 0) {
+      err.textContent = '月給と1か月の所定労働時間を入力してください。';
+      return;
+    }
+    hourly = amount / hours;
+  } else if (!amount || amount <= 0) {
+    err.textContent = '時給を入力してください。';
+    return;
+  }
+
+  var required = p.amountR8;
+  var gap = hourly - required;
+  var reached = gap >= 0;
+
+  var head = reached
+    ? '✅ <strong>' + p.name + '</strong>（令和8年度 ' + num(required) + ' 円）に<strong>達しています</strong>。'
+    : '⚠️ <strong>' + p.name + '</strong>（令和8年度 ' + num(required) + ' 円）に<strong>達していません</strong>。';
+
+  var line = reached
+    ? 'あなたの時給は ' + num(Math.round(hourly)) + ' 円、基準より ' + num(Math.round(gap)) + ' 円 上です。'
+    : 'あなたの時給は ' + num(Math.round(hourly)) + ' 円、不足分は 1時間あたり ' + num(Math.round(-gap)) + ' 円。';
+
+  var month = '';
+  if (mode === 'month') {
+    var need = required * hours;
+    month = '1か月 ' + num(hours) + ' 時間で必要な月給は ' + num(Math.ceil(need))
+         + ' 円（現在 ' + num(Math.round(amount)) + ' 円）。差 '
+         + num(Math.ceil(need) - Math.round(amount)) + ' 円。';
+  }
+
+  var note = '';
+  if (!p.applied) {
+    note = '<br><span class="muted">この県の新額（令和8年度）の発効日は ' + p.effectiveDate
+         + ' です' + (p.dateTentative ? '（予定）' : '') + '。発効日より前は前年度額 '
+         + num(p.amountR7) + ' 円が適用されています。上の判定は'
+         + (hourly >= p.amountR7 && hourly < p.amountR8
+             ? '新額に対するものです — 発効日前なら現行額ではセーフ、発効日以降ならアウトです。'
+             : '新額に対するものです。')
+         + '</span>';
+  } else {
+    note = '<br><span class="muted">この県は ' + p.effectiveDate + ' に発効済みで、現在この額が適用中です。</span>';
+  }
+
+  var cls = reached ? 'ok' : 'ng';
+  if (!p.applied && hourly >= p.amountR7 && hourly < p.amountR8) { cls = 'wait'; }
+
+  box.className = cls;
+  box.innerHTML = head + '<br>' + line + (month ? '<br>' + month : '') + note;
+  box.style.display = 'block';
+}
+
+document.getElementById('mode').addEventListener('change', function () {
+  var isMonth = this.value === 'month';
+  document.getElementById('hoursBox').style.display = isMonth ? 'block' : 'none';
+  document.getElementById('lblAmount').textContent = isMonth ? 'あなたの月給（円・総支給額）' : 'あなたの時給（円）';
+});
+document.getElementById('btn').addEventListener('click', judge);
+window.addEventListener('DOMContentLoaded', load);
+</script>
+</body>
+</html>
