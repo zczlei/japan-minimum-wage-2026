@@ -50,7 +50,7 @@
 ### JavaScript で読む（GitHub Pages 経由）
 
 ```js
-fetch('https://<あなたのID>.github.io/japan-minimum-wage-2026/data/r8-2026.json')
+fetch('https://zczlei.github.io/japan-minimum-wage-2026/data/r8-2026.json')
   .then(function (r) { return r.json(); })
   .then(function (d) {
     var t = d.prefectures.find(function (p) { return p.slug === 'tokyo'; });
@@ -61,7 +61,7 @@ fetch('https://<あなたのID>.github.io/japan-minimum-wage-2026/data/r8-2026.j
 ### curl
 
 ```sh
-curl -sL https://<あなたのID>.github.io/japan-minimum-wage-2026/data/r8-2026.json -o r8-2026.json
+curl -sL https://zczlei.github.io/japan-minimum-wage-2026/data/r8-2026.json -o r8-2026.json
 ```
 
 ### スプレッドシートに落とす
@@ -94,10 +94,8 @@ curl -sL https://<あなたのID>.github.io/japan-minimum-wage-2026/data/r8-2026
 
 各県の金額・発効日の根拠（都道府県労働局の公示をまとめた公式ページ）：
 
-- 厚生労働省「都道府県別最低賃金」関連ページ：<URL を貼る>
-- 上記ページに記載の各都道府県労働局公示
-
-**（↑ この2行は、あなたのハブページにある出典栏のURLをそのまま移してください。私は本轮でそのURL列を实测していないので、勝手に書きません。）**
+- [厚生労働省「地域別最低賃金の全国一覧」](https://www.mhlw.go.jp/stf/seisakunitsuite/bunya/koyou_roudou/roudoukijun/minimumichiran/)
+- [厚生労働省「最低賃金制度の概要」](https://www.mhlw.go.jp/stf/seisakunitsuite/bunya/koyou_roudou/roudoukijun/minimumichiran/minimumchingin/)
 
 ## 更新方針
 
