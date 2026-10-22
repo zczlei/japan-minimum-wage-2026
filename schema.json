@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://github.com/<あなたのID>/japan-minimum-wage-2026/blob/main/schema.json",
+  "$id": "https://github.com/zczlei/japan-minimum-wage-2026/blob/main/schema.json",
   "title": "Japan regional minimum wage, Reiwa 8 (2026)",
   "description": "47都道府県の地域別最低賃金（令和8年度＝2026年度確定額・令和7年度額・適用開始日）",
   "type": "object",
